@@ -39,7 +39,10 @@ check_disk() {
 # --- Main ---
 log_message "INFO" "Starting disk check (threshold: ${THRESHOLD}%)"
 
-check_disk "/"
+# Check multiple mount points
+for MOUNT in / /tmp; do
+    check_disk "$MOUNT"
+done
 
 EXIT_CODE=$?
 
