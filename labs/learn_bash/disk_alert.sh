@@ -6,6 +6,8 @@
 # Example: ./disk_alert.sh 80
 # ============================================
 
+set -euo pipefail
+
 # --- Config ---
 THRESHOLD=${1:-80}           # use argument if provided, default to 80
 LOG_FILE="/tmp/disk_alert.log"
