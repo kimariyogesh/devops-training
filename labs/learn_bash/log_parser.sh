@@ -24,3 +24,51 @@ error_exit() {
     exit 1
 }
 
+# --cleanup--
+cleanup() {
+    log "INFO" "Parser finished report at: $REPORT_FILE"
+}
+
+# Automatic cleanup mechanism
+trap cleanup EXIT
+
+# --VALIDATE INPUT--
+[ -z "$LOG_FILE" ] && error_exit "No log file specified. Usage: $0 <logfile> [filter]"
+[ -f "$LOG_FILE" ] || error_exit "Log file not found: $LOG_FILE"
+
+log "INFO" "Parsing log file: $LOG_FILE"
+log "INFO" "Filter: $FILTER"
+
+# --Parse and report--
+TOTAL=$(wc -l < "$LOG_FILE")
+ERRORS=$(grep -c "\[ERROR\]" "$LOG_FILE" || true)
+WARNS=$(grep -c "\[WARN\]" "$LOG_FILE" || true)
+ALERTS=$(grep -c "\[ALERT\]" "$LOG_FILE" || true)
+OKS=$(grep -c "\[OK\]"   "$LOG_FILE" || true)
+
+cat > "$REPORT_FILE" << EOF
+========================================
+Log Analysis Report
+========================================
+File     : $LOG_FILE
+Analysed : $(date)
+----------------------------------------
+Total lines : $TOTAL
+OK          : $OKS
+Alerts      : $ALERTS
+Warnings    : $WARNS
+Errors      : $ERRORS
+----------------------------------------
+EOF
+
+# --- Apply filter ---
+if [ "$FILTER" = "all" ]; then
+    echo "--- All entries ---" >> "$REPORT_FILE"
+    cat "$LOG_FILE" >> "$REPORT_FILE"
+else
+    FILTER_UPPER=$(echo "$FILTER" | tr '[:lower:]' '[:upper:]')
+    echo "--- Filtered: $FILTER_UPPER ---" >> "$REPORT_FILE"
+    grep "\[$FILTER_UPPER\]" "$LOG_FILE" >> "$REPORT_FILE" || true
+fi
+
+cat "$REPORT_FILE"
